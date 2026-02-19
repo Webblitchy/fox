@@ -1,0 +1,36 @@
+const age = 100
+
+const trancheAge: str
+
+if age < 18 {
+    trancheAge = "mineur"
+} else if age == 100 {
+    trancheAge = "centenaire"
+} else if age == 1000 {
+    trancheAge = "milenaire"
+} else {
+    trancheAge = "majeur"
+    //return
+}
+
+print "Vous êtes..."
+print trancheAge
+
+
+var a: int
+a = 2
+a == fdsjjkjjfdsklfjlsfdjl
+//var b: dec = 3802983028103
+if a == 2 {
+    print "a"
+} else {
+    print "b"
+}
+
+var test: int
+while true {
+    while false {
+    }
+    test = 2
+    break
+}

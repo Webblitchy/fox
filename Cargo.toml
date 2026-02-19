@@ -1,0 +1,7 @@
+[workspace]
+members = [
+    "compiler",
+    "corelib",
+]
+
+resolver = "3"

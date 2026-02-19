@@ -1,0 +1,43 @@
+fn main() {
+//    print(true || false)
+//    print()
+//    print(2)
+//    print(1.302)
+//    print(0xbeef)
+//    print(9e+100)
+//    print("Ceci est un très long test ✔")
+//    const a = test()
+//    print(a)
+    //voidFn()
+    print()
+    print("OK t'as pas tout peté 🚀")
+    const a = test()
+}
+
+fn test() -> Int {
+    print("FN test")
+
+    var i = 0
+    while true {
+        if i == 10 {
+            break
+        }
+        i += 1
+    }
+
+    if false {
+        return 1
+    }
+    print("jK")
+    print("jK")
+    print("jK")
+
+    return 0
+    var b = 2 // doit être ignoré
+
+}
+
+fn voidFn() {
+    print(1)
+    print(2)
+}

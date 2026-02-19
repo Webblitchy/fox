@@ -1,0 +1,39 @@
+TODO:
+- Changer la manière de gérer les erreurs: 
+    au final stocker le message que dans le vecteur errors
+    -> ajouter dans l'AST que Error
+- faire la fonction synchronise pour qu'elle gère les {...}
+    -> la mettre dans le parseur et pas le scanner
+
+
+- Pour l'instant dans le parser, chaque erreur interrompt le parsing du statment -> à voir s'il y en a qu'on peut continuer ?
+-> finalement il y a pas de return jusqu'en haut de l'arbre : erreur de fonctions qui s'interrompent jamais
+
+Juste maintenant:
+- vérifier les Expr et typedExpr => est-ce que ça génère une CompileError pour Stmt
+
+
+
+
+
+---
+petits trucs:
+- enlever "builtin" de SymbolType ?
+
+
+---
+fix:
+- le warning de code après un return est pour chaque statment => synchronise jusqu'à la fin de fonction
+
+
+---
+env:
+- enlever le autoformat : pas assez d'espaces
+- gérer pourquoi je peux pas aller à la définition des fonctions
+
+
+
+DEMAIN
+- faire le overflow pour les autres types que int (IRGen)
+
+

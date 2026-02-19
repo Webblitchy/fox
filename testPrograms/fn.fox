@@ -1,0 +1,31 @@
+fn f1() {}
+
+fn f2() -> int {
+    return 1
+}
+
+fn f3(p:int) {}
+
+fn f4(p: dec) -> dec {
+    return 1.0
+}
+
+fn f5(p1: int, p2: int) -> str {
+    return "j"
+}
+
+fn f6(
+    p1: int,
+    p2: dec,
+) -> dec {
+    return 0.1
+}
+
+
+fn f7(
+    p1: int
+    p2: dec
+) -> dec {
+    return 1.2
+}
+

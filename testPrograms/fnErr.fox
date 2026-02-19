@@ -1,0 +1,14 @@
+fn f4(p: dec) -> dec {
+    var i = 0
+    while i < 10: abc {
+        if i == 2 {
+            continue fjdskl
+        }
+    }
+    return 1.2
+}
+
+fn main() -> int {
+    return 1;
+}
+

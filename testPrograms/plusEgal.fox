@@ -1,0 +1,22 @@
+var i = 1
+//i += 2 // erreur fin d'expression
+i += 2
+print i
+
+// VarDecl { name: "i", expr: Literal { value: Int(1), typ: Int, metadata: Metadata { line: 1, lineChar: 9, lexeme: "1" } }, isConstant: false }
+// VarAssign { name: "i", expr: Literal { value: Int(2), typ: Int, metadata: Metadata { line: 2, lineChar: 6, lexeme: "2" } } }
+// Print(Literal { value: Identifier("i"), typ: Int, metadata: Metadata { line: 3, lineChar: 8, lexeme: "i" } })
+
+
+// VarAssign { 
+//    name: "i", 
+//    expr: BinaryExpr { 
+//        left: Literal { 
+//            value: Identifier("i"), typ: Int, metadata: Metadata { line: 3, lineChar: 6, lexeme: "i" } 
+//        }, 
+//        operator: Token { tokenType: Plus, line: 3, lineChar: 8, lexeme: "+", literal: None }, 
+//        right: Literal { value: Int(2), typ: Int, metadata: Metadata { line: 3, lineChar: 10, lexeme: "2" } },
+//        typ: Int, 
+//        metadata: Metadata { line: 3, lineChar: 6, lexeme: "i+2" } 
+//    } 
+//}

@@ -1,0 +1,12 @@
+fn test() -> Int {
+    if true {
+        
+    }
+    else {
+        return 1
+    }
+}
+
+fn main() {
+    test()
+}

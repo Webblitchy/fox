@@ -1,0 +1,4 @@
+cargo build -p corelib [--release]
+cargo build -p fox [--release]
+
+cargo run -p fox build testPrograms/print.fox

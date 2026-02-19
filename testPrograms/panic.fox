@@ -1,0 +1,12 @@
+fn main() {
+    var a: Int
+    if false {
+        a = 1
+    }
+    else {
+        panic("nope")
+    }
+
+    print(a)
+
+}

@@ -1,0 +1,14 @@
+fn fib(n: Int) -> Int {
+    if n == 0 || n == 1 {
+        return n
+    }
+    else {
+        return fib(n - 1) + fib(n - 2)
+    }
+}
+
+fn main() {
+    const fib45 = fib(45)
+    print(fib45)
+}
+

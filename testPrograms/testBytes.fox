@@ -1,0 +1,6 @@
+fn main() {
+    const a = '12
+    const b: Byte = '12
+    const c = '0x1
+    //const test = 'ok'
+}
