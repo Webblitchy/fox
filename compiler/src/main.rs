@@ -6,7 +6,7 @@
 
 use std::env;
 
-use crate::fox::RunMode;
+use crate::fox::{ErrorPolicy, RunMode};
 
 mod _1_lexing;
 use _1_lexing::*;
@@ -31,17 +31,17 @@ fn main() {
     if args.len() == 3 {
         match args[1].as_str() {
             "build" => {
-                fox::compileFile(&args[2], RunMode::Build);
+                fox::compileFile(&args[2], RunMode::Build, ErrorPolicy::Normal);
                 return;
             }
             "run" => {
-                fox::compileFile(&args[2], RunMode::Run);
+                fox::compileFile(&args[2], RunMode::Run, ErrorPolicy::Normal);
                 return;
             }
             _ => {}
         }
     } else if args.len() == 2 {
-        fox::compileFile(&args[1], RunMode::Run);
+        fox::compileFile(&args[1], RunMode::Run, ErrorPolicy::Normal);
         return;
     }
 

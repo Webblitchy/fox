@@ -1,8 +1,10 @@
 #![allow(dead_code)]
 #![allow(non_snake_case)]
 
+use crate::_1_lexing::scanError::ScanError;
 use crate::compileErr::CompileErr;
 use crate::metadata::{self, Metadata};
+use crate::scanError::ScanError::*;
 use crate::token::*;
 use TokenType::*;
 use std::collections::HashMap;
@@ -16,6 +18,17 @@ enum NbrType {
     IntegerBase10,
     IntegerBase16,
     Decimal,
+}
+impl NbrType {
+    pub fn asInt(&self) -> u8 {
+        match self {
+            Self::Decimal => return 0, // just to have a value
+            Self::IntegerBase2 => return 2,
+            Self::IntegerBase8 => return 8,
+            Self::IntegerBase10 => return 10,
+            Self::IntegerBase16 => return 16,
+        }
+    }
 }
 
 pub struct Scanner {
@@ -114,11 +127,39 @@ impl Scanner {
                     }
                 } else if self.nextMatches('*') {
                     // multi line comment
-                    while self.peek() != '*' && self.peekNext() != '/' && !self.isAtEnd() {
+                    let startOfCommentBlk = self.current - 2;
+                    let startColumn = self.column - 2;
+
+                    // To support nested comments
+                    let mut commentLvl = 1;
+
+                    loop {
+                        if self.peek() == '*' && self.peekNext() == '/' {
+                            commentLvl -= 1;
+                            if commentLvl == 0 {
+                                self.advance(); // skip last '*'
+                                self.advance(); // skip last '/'
+                                break;
+                            }
+                        } else if self.peek() == '/' && self.peekNext() == '*' {
+                            commentLvl += 1;
+                        } else if self.isAtEnd() {
+                            self.errors.push(CompileErr {
+                                errType: String::from("Unterminated comment block"),
+                                msg: String::from("Missing \"*/\""),
+                                metadata: Metadata {
+                                    line: self.line,
+                                    column: startColumn,
+                                    start: startOfCommentBlk,
+                                    end: self.current + 1,
+                                },
+                            });
+                            self.addToken(ErrorToken(UnterminatedCommentBlock));
+                            return; // is at EOF
+                        }
+
                         self.advance();
                     }
-                    self.advance(); // skip last '*'
-                    self.advance(); // skip last '/'
                 } else if self.nextMatches('=') {
                     self.addToken(SlashEqual);
                 } else {
@@ -201,23 +242,11 @@ impl Scanner {
 
             '"' => self.handleString(),
 
-            '\'' => match self.handleByte() {
-                Ok(()) => {}
-                Err(err) => {
-                    self.errors.push(err);
-                    self.addToken(InvalidToken);
-                }
-            },
+            '\'' => self.handleByte(),
 
             otherChar => {
                 if otherChar.is_ascii_digit() {
-                    match self.handleNumber() {
-                        Ok(()) => {}
-                        Err(err) => {
-                            self.errors.push(err);
-                            self.addToken(InvalidToken);
-                        }
-                    }
+                    self.handleNumber();
                 } else if otherChar.is_ascii_alphabetic() || otherChar == '_' {
                     self.handleIdentifier();
                 } else {
@@ -324,7 +353,7 @@ impl Scanner {
                         end: self.current + 1,
                     },
                 });
-                self.addToken(InvalidToken);
+                self.addToken(ErrorToken(UnterminatedStr));
                 return;
             }
             self.advance();
@@ -368,7 +397,7 @@ impl Scanner {
         return nbrType;
     }
 
-    fn handleNumber(&mut self) -> Result<(), CompileErr> {
+    fn handleNumber(&mut self) {
         let mut nbrType = self.getNumberBase();
 
         // read every chars (later conversion will handle errors)
@@ -441,11 +470,14 @@ impl Scanner {
                             IntErrorKind::PosOverflow | IntErrorKind::NegOverflow => "Overflowing",
                             _ => "Invalid",
                         };
-                        return Err(CompileErr {
+
+                        self.errors.push(CompileErr {
                             errType: "Invalid number".to_string(),
                             msg: format!("{} number", typeMsg),
                             metadata: lastMetadata,
                         });
+                        self.addToken(ErrorToken(InvalidInt));
+                        return;
                     }
                 };
                 self.addToken(Int(number));
@@ -454,41 +486,44 @@ impl Scanner {
                 let number: f64 = match numberStr.parse::<f64>() {
                     Ok(n) => {
                         if n.is_infinite() {
-                            return Err(CompileErr {
+                            self.errors.push(CompileErr {
                                 errType: "Invalid number".to_string(),
                                 msg: "Overflowing decimal".to_string(),
                                 metadata: lastMetadata,
                             });
+                            self.addToken(ErrorToken(InvalidDec));
+                            return;
                         }
                         n
                     }
                     Err(_) => {
-                        return Err(CompileErr {
+                        self.errors.push(CompileErr {
                             errType: "Invalid number".to_string(),
                             msg: "Invalid decimal".to_string(),
                             metadata: lastMetadata,
                         });
+                        self.addToken(ErrorToken(InvalidDec));
+                        return;
                     }
                 };
                 self.addToken(Dec(number));
             }
-            NbrType::IntegerBase16 => {
-                let number = convertFromOtherBase(16, &numberStr, lastMetadata)?;
-                self.addToken(Int(number));
-            }
-            NbrType::IntegerBase8 => {
-                let number = convertFromOtherBase(8, &numberStr, lastMetadata)?;
-                self.addToken(Int(number));
-            }
-            NbrType::IntegerBase2 => {
-                let number = convertFromOtherBase(2, &numberStr, lastMetadata)?;
+
+            NbrType::IntegerBase16 | NbrType::IntegerBase8 | NbrType::IntegerBase2 => {
+                let number = match convertFromOtherBase(nbrType.asInt(), &numberStr, lastMetadata.clone()) {
+                    Ok(n) => n,
+                    Err(e) => {
+                        self.errors.push(e);
+                        self.addToken(ErrorToken(InvalidInt));
+                        return;
+                    }
+                };
                 self.addToken(Int(number));
             }
         }
-        return Ok(());
     }
 
-    fn handleByte(&mut self) -> Result<(), CompileErr> {
+    fn handleByte(&mut self) {
         // Ignore the '
         self.advance();
 
@@ -523,11 +558,13 @@ impl Scanner {
             .collect();
 
         if wrongStr {
-            return Err(CompileErr {
+            self.errors.push(CompileErr {
                 errType: "Invalid byte".to_string(),
                 msg: format!("' is used to declare Byte: '123\nUse \" to declare a Str"),
                 metadata: lastMetadata,
             });
+            self.addToken(ErrorToken(SingleQuoteStr));
+            return;
         }
 
         // Convert string to number
@@ -541,44 +578,50 @@ impl Scanner {
                             IntErrorKind::PosOverflow | IntErrorKind::NegOverflow => "Overflowing",
                             _ => "Invalid",
                         };
-                        return Err(CompileErr {
+                        self.errors.push(CompileErr {
                             errType: "Invalid number".to_string(),
                             msg: format!("{} number", typeMsg),
                             metadata: lastMetadata,
                         });
+                        self.addToken(ErrorToken(InvalidByte));
+                        return;
                     }
                 };
             }
-            NbrType::IntegerBase16 => {
-                numberI64 = convertFromOtherBase(16, &numberStr, lastMetadata.clone())?;
-            }
-            NbrType::IntegerBase8 => {
-                numberI64 = convertFromOtherBase(8, &numberStr, lastMetadata.clone())?;
-            }
-            NbrType::IntegerBase2 => {
-                numberI64 = convertFromOtherBase(2, &numberStr, lastMetadata.clone())?;
+            NbrType::IntegerBase16 | NbrType::IntegerBase8 | NbrType::IntegerBase2 => {
+                numberI64 = match convertFromOtherBase(byteBase.asInt(), &numberStr, lastMetadata.clone()) {
+                    Ok(n) => n,
+                    Err(e) => {
+                        self.errors.push(e);
+                        self.addToken(ErrorToken(InvalidByte));
+                        return;
+                    }
+                }
             }
             NbrType::Decimal => {
-                return Err(CompileErr {
+                self.errors.push(CompileErr {
                     errType: "Invalid byte number".to_string(),
                     msg: format!("{} is not a byte number: an integer between 0 and 255", numberStr),
                     metadata: lastMetadata,
                 });
+                self.addToken(ErrorToken(InvalidByte));
+                return;
             }
         }
 
         if numberI64 < 0 || numberI64 > 255 {
-            return Err(CompileErr {
+            self.errors.push(CompileErr {
                 errType: "Invalid number".to_string(),
                 msg: format!("{} is not a byte number: an integer between 0 and 255", numberStr),
                 metadata: lastMetadata,
             });
+            self.addToken(ErrorToken(InvalidByte));
+            return;
         }
 
         let numberU8 = numberI64 as u8;
 
         self.addToken(Byte(numberU8));
-        return Ok(());
     }
 
     fn handleIdentifier(&mut self) {
@@ -624,7 +667,7 @@ impl Scanner {
         };
 
         self.errors.push(err);
-        self.addToken(TokenType::InvalidToken);
+        self.addToken(ErrorToken(InvalidToken));
     }
 }
 
@@ -659,9 +702,9 @@ fn getKeywords() -> &'static HashMap<&'static str, TokenType> {
     })
 }
 
-fn convertFromOtherBase(base: u32, strNbr: &str, metadata: Metadata) -> Result<i64, CompileErr> {
+fn convertFromOtherBase(base: u8, strNbr: &str, metadata: Metadata) -> Result<i64, CompileErr> {
     let withoutPrefix: String = strNbr.chars().skip(2).collect();
-    match i64::from_str_radix(withoutPrefix.as_str(), base) {
+    match i64::from_str_radix(withoutPrefix.as_str(), base as u32) {
         Ok(n) => return Ok(n),
         Err(e) => {
             let typeMsg = match e.kind() {

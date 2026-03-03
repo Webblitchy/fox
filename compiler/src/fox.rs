@@ -24,9 +24,14 @@ pub enum RunMode {
     Run,
 }
 
+pub enum ErrorPolicy {
+    Normal,
+    NonBlocking,
+}
+
 const IR_FILE: &str = "output.ll"; // LLVM IR
 
-pub fn compileFile(filePath: &str, mode: RunMode) {
+pub fn compileFile(filePath: &str, mode: RunMode, errPolicy: ErrorPolicy) {
     let mut errors: Vec<CompileErr> = Vec::new();
     let filename = filePath.split("/").last().unwrap();
     let shortFilename = filename.replace(".fox", "").to_string();

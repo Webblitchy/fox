@@ -82,7 +82,10 @@ impl Parser {
                 unimplemented!();
             }
             TokenType::Return => self.returnStmt(),
-            TokenType::InvalidToken => Stmt::CompileErr, // TODO: Théoriquement il faudrait rien mettre
+            TokenType::ErrorToken(scanError) => {
+                // TODO soon: handle differents scan errors
+                panic!("TODO handle Error tokens");
+            }
             _ => self.exprStmt(),
         }
     }
@@ -1100,10 +1103,8 @@ impl Parser {
 
     fn getToken(&self, index: usize) -> Token {
         match self.tokens.get(index) {
-            Some(token) => {
-                return token.clone();
-            }
-            None => Token::invalid(),
+            Some(token) => return token.clone(),
+            None => panic!("Invalid index in getToken"), // if error in the compiler code
         }
     }
 }

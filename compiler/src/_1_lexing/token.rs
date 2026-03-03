@@ -3,7 +3,7 @@
 
 use std::fmt;
 
-use crate::metadata::Metadata;
+use crate::{_1_lexing::scanError::ScanError, metadata::Metadata};
 
 #[derive(Debug, Clone)]
 pub struct Token {
@@ -19,13 +19,6 @@ impl Token {
     pub fn empty() -> Token {
         Token {
             tokenType: TokenType::Eof,
-            lexeme: String::new(),
-            metadata: Metadata::empty(),
-        }
-    }
-    pub fn invalid() -> Token {
-        Token {
-            tokenType: TokenType::InvalidToken,
             lexeme: String::new(),
             metadata: Metadata::empty(),
         }
@@ -106,7 +99,7 @@ pub enum TokenType {
     Eol,
     Eof,
 
-    InvalidToken, // For errors
+    ErrorToken(ScanError), // For errors
 }
 
 // To use println!("{}", TokenType);
